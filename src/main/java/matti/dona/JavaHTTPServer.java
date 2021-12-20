@@ -109,36 +109,84 @@ public class JavaHTTPServer implements Runnable{
 				
 			} else {
 				// GET or HEAD method
-				if (fileRequested.endsWith("/")) {
+
+				if(fileRequested.endsWith("/")) {
 					fileRequested += DEFAULT_FILE;
+					File file = new File(WEB_ROOT, fileRequested);
+
+					if(file.exists()){
+
+						int fileLength = (int) file.length();
+						String content = getContentType(fileRequested);
+						
+						if (method.equals("GET")) { // GET method so we return content
+							byte[] fileData = readFileData(file, fileLength);
+							
+							// send HTTP Headers
+							out.println("HTTP/1.1 200 OK");
+							out.println("Server: Java HTTP Server from SSaurel : 1.0");
+							out.println("Date: " + new Date());
+							out.println("Content-type: " + content);
+							out.println("Content-length: " + fileLength);
+							out.println(); // blank line between headers and content, very important !
+							out.flush(); // flush character output stream buffer
+							
+							dataOut.write(fileData, 0, fileLength);
+							dataOut.flush();
+						}
+						
+						if (verbose) {
+							System.out.println("File " + fileRequested + " of type " + content + " returned");
+						}
+					}else{
+
+						fileNotFound(out, dataOut, fileRequested);
+					}
+
 				}else{
 
-                    fileMoved(out, dataOut, fileRequested);
+					File file = new File(WEB_ROOT, fileRequested);
+
+					if(file.isFile() && file.exists()){
+
+						int fileLength = (int) file.length();
+						String content = getContentType(fileRequested);
+						
+						if (method.equals("GET")) { // GET method so we return content
+							byte[] fileData = readFileData(file, fileLength);
+							
+							// send HTTP Headers
+							out.println("HTTP/1.1 200 OK");
+							out.println("Server: Java HTTP Server from SSaurel : 1.0");
+							out.println("Date: " + new Date());
+							out.println("Content-type: " + content);
+							out.println("Content-length: " + fileLength);
+							out.println(); // blank line between headers and content, very important !
+							out.flush(); // flush character output stream buffer
+							
+							dataOut.write(fileData, 0, fileLength);
+							dataOut.flush();
+						}
+						
+						if (verbose) {
+							System.out.println("File " + fileRequested + " of type " + content + " returned");
+						}
+					}else{
+
+						if(fileRequested.endsWith(".html") || fileRequested.endsWith(".css") || fileRequested.endsWith(".js") || fileRequested.endsWith(".jpg") || fileRequested.endsWith(".png") || fileRequested.endsWith(".gif")){
+
+							fileNotFound(out, dataOut, fileRequested);
+						}else{
+
+							fileMoved(out, dataOut, fileRequested);
+						}
+
+					}
+
                 }
 				
-				File file = new File(WEB_ROOT, fileRequested);
-				int fileLength = (int) file.length();
-				String content = getContentType(fileRequested);
 				
-				if (method.equals("GET")) { // GET method so we return content
-					byte[] fileData = readFileData(file, fileLength);
-					
-					// send HTTP Headers
-					out.println("HTTP/1.1 200 OK");
-					out.println("Server: Java HTTP Server from SSaurel : 1.0");
-					out.println("Date: " + new Date());
-					out.println("Content-type: " + content);
-					out.println("Content-length: " + fileLength);
-					out.println(); // blank line between headers and content, very important !
-					out.flush(); // flush character output stream buffer
-					
-					dataOut.write(fileData, 0, fileLength);
-					dataOut.flush();
-				}
 				
-				if (verbose) {
-					System.out.println("File " + fileRequested + " of type " + content + " returned");
-				}
 				
 			}
 			
@@ -186,10 +234,29 @@ public class JavaHTTPServer implements Runnable{
 	
 	// return supported MIME Types
 	private String getContentType(String fileRequested) {
-		if (fileRequested.endsWith(".htm")  ||  fileRequested.endsWith(".html"))
+		if (fileRequested.endsWith(".htm")  ||  fileRequested.endsWith(".html")){
+
 			return "text/html";
-		else
+		}else if(fileRequested.endsWith(".css")){
+
+			return "text/css";
+		}else if(fileRequested.endsWith(".js")){
+
+			return "application/javascript";
+		}else if(fileRequested.endsWith(".png")){
+
+			return "image/png";
+		}else if(fileRequested.endsWith(".jpg")){
+
+			return "image/jpg";
+		}else if(fileRequested.endsWith(".gif")){
+
+			return "image/gif";
+		}else{
+
 			return "text/plain";
+		}
+			
 	}
 	
 	private void fileNotFound(PrintWriter out, OutputStream dataOut, String fileRequested) throws IOException {
